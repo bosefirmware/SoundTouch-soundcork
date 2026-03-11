@@ -137,6 +137,32 @@ def test_save_device_info_returns_object_and_writes_file(
         "account_device_dir",
         lambda *_: f"/virtual/data/12345/{DEVICES_DIR}/{sample_device.device_id}",
     )
+    xml = ET.fromstring(
+        f"""
+    <info deviceID="{sample_device.device_id}">
+    <name>{sample_device.name}</name>
+    <type>{sample_device.product_code}</type>
+    <components>
+        <component>
+            <componentCategory>SCM</componentCategory>
+            <softwareVersion>{sample_device.firmware_version}</softwareVersion>
+            <serialNumber>{sample_device.device_serial_number}</serialNumber>
+        </component>
+        <component>
+            <componentCategory>PackagedProduct</componentCategory>
+            <serialNumber>{sample_device.product_serial_number}</serialNumber>
+        </component>
+    </components>
+    <networkInfo type="SCM">
+        <macAddress>{sample_device.device_id}</macAddress>
+        <ipAddress>{sample_device.ip_address}</ipAddress>
+    </networkInfo>
+    <createdOn>{sample_device.created_on}</createdOn>
+    <updatedOn>{sample_device.updated_on}</updatedOn>
+    </info>
+    """
+    )
+    monkeypatch.setattr("soundcork.datastore.ET.parse", lambda _: ET.ElementTree(xml))
 
     updated_device = datastore.save_device_info(sample_device, "12345")
     updated_name = updated_device.name
@@ -192,7 +218,7 @@ def test_create_account_returns_false_if_account_dir_present(
     mkdir_mock.assert_not_called()
 
 
-def test_add_device_returns_false_if_account_device_dir_missing(
+def test_add_device_returns_none_if_account_device_dir_missing(
     datastore: DataStore,
     sample_device: DeviceInfo,
     monkeypatch,
@@ -201,7 +227,7 @@ def test_add_device_returns_false_if_account_device_dir_missing(
 
     added = datastore.add_device("12345", sample_device.device_id, sample_device)
 
-    assert added is False
+    assert added is None
 
 
 def test_add_device_calls_mkdir_and_save_info_if_account_device_dir_present(
@@ -217,7 +243,7 @@ def test_add_device_calls_mkdir_and_save_info_if_account_device_dir_present(
 
     added = datastore.add_device("12345", sample_device.device_id, sample_device)
 
-    assert added is True
+    assert added is not None
     mkdir_mock.assert_called_once_with(
         f"/virtual/data/12345/{DEVICES_DIR}/{sample_device.device_id}"
     )
