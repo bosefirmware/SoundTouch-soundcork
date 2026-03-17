@@ -38,6 +38,7 @@ from soundcork.marge import (
     recents_xml,
     remove_device_from_account,
     remove_source_from_account,
+    rename_device,
     software_update_xml,
     source_providers,
     update_device_poweron,
@@ -113,12 +114,22 @@ def read_root():
 @app.post(
     "/marge/streaming/support/power_on",
     tags=["marge"],
-    status_code=HTTPStatus.OK,
 )
-async def power_on(request: Request):
+async def power_on(request: Request, response: Response) -> Response:
     xml = await request.body()
-    update_device_poweron(datastore, xml)
-    return
+    account = update_device_poweron(datastore, xml)
+    if account:
+        response.status_code = HTTPStatus.OK
+        return response
+    else:
+        response = BoseXMLResponse()
+        element = ET.Element("status")
+        ET.SubElement(element, "message").text = "Device does not exist"
+        ET.SubElement(element, "status-code").text = "4012"
+        response.body = bose_xml_str(element).encode()
+        response.headers["Content-Length"] = str(len(response.body))
+        response.status_code = HTTPStatus.BAD_REQUEST
+        return response
 
 
 @app.get("/marge/streaming/sourceproviders", tags=["marge"])
@@ -339,6 +350,34 @@ async def post_account_device(
 ):
     xml = await request.body()
     device_id, xml_resp = add_device_to_account(datastore, account, xml.decode())
+
+    return bose_xml_str(xml_resp)
+
+
+@app.put(
+    "/marge/streaming/account/{account}/device/{device_id}",
+    response_class=BoseXMLResponse,
+    tags=["marge"],
+    status_code=HTTPStatus.CREATED,
+    dependencies=[
+        Depends(
+            Etag(
+                etag_gen=etag_for_account,
+                weak=False,
+                extra_headers={
+                    "method_name": "putDevice",
+                },
+            )
+        )
+    ],
+)
+async def put_account_device(
+    account: Annotated[str, Path(pattern=ACCOUNT_RE)],
+    device_id: Annotated[str, Path(pattern=DEVICE_RE)],
+    request: Request,
+):
+    xml = await request.body()
+    xml_resp = rename_device(datastore, account, device_id, xml.decode())
 
     return bose_xml_str(xml_resp)
 
