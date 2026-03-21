@@ -196,9 +196,7 @@ def add_device(device: upnpclient.upnp.Device) -> bool:
         if not datastore.account_exists(account_id):  # type: ignore
             recents = read_recents(device)
             presets = read_presets(device)
-            # TBD
             sources = read_sources(device)
-            # sources = ""
             add_account(account_id, recents, presets, sources)  # type: ignore
 
         datastore.add_device(
