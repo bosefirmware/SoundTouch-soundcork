@@ -8,8 +8,10 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Path, Request, Response
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi_etag import Etag
 
+from soundcork.admin import get_admin_router
 from soundcork.bmx import (
     play_custom_stream,
     tunein_playback,
@@ -97,6 +99,8 @@ app = FastAPI(
     openapi_tags=tags_metadata,
     lifespan=lifespan,
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # @lru_cache
 # def get_settings():
@@ -577,3 +581,7 @@ def add_device_to_datastore(device_id: str):
 # -- include all routines for groups
 app.include_router(get_groups_router(datastore))
 app.include_router(get_groups_service_router(datastore))
+
+
+# -- include admin router
+app.include_router(get_admin_router(datastore, settings))

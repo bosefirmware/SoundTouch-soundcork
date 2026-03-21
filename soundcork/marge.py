@@ -283,9 +283,9 @@ def add_recent(
     # these values are all assumed to be required for this to be
     # a valid Recent XML source; if any of these are not present
     # they should produce an exception
-    name = new_recent_elem.find("name").text  # type:ignore
-    source_id = new_recent_elem.find("sourceid").text  # type:ignore
-    location = new_recent_elem.find("location").text  # type:ignore
+    name = new_recent_elem.find("name").text  # type: ignore
+    source_id = new_recent_elem.find("sourceid").text  # type: ignore
+    location = new_recent_elem.find("location").text  # type: ignore
     is_presetable = "true"
 
     type = strip_element_text(new_recent_elem.find("contentItemType"))
@@ -320,14 +320,14 @@ def add_recent(
         # would probably have the second clobber the first
         next_id = max(int(recent.id) for recent in recents_list) + 1
         recent_obj = Recent(
-            name=name,  # type:ignore
+            name=name,  # type: ignore
             utc_time=str(utc_time),
             id=str(next_id),
             source_id=source_id,
             source=source,
             device_id=device_id,
-            type=type,  # type:ignore
-            location=location,  # type:ignore
+            type=type,  # type: ignore
+            location=location,  # type: ignore
             source_account=source_account,
             is_presetable=is_presetable,
         )
