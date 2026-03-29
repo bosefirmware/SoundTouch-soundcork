@@ -55,6 +55,7 @@ from soundcork.model import (
     BmxResponse,
     BoseXMLResponse,
 )
+from soundcork.ui.speakers import Speakers
 from soundcork.utils import strip_element_text
 
 logging.basicConfig(
@@ -65,6 +66,7 @@ logger = logging.getLogger(__name__)
 
 datastore = DataStore()
 settings = Settings()
+speakers = Speakers(datastore, settings)
 
 
 @asynccontextmanager
@@ -666,4 +668,4 @@ app.include_router(get_groups_service_router(datastore))
 
 
 # -- include admin router
-app.include_router(get_admin_router(datastore, settings))
+app.include_router(get_admin_router(datastore, speakers))
