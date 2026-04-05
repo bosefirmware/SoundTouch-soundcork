@@ -6,6 +6,9 @@ import xml.etree.ElementTree as ET
 
 from soundcork.model import (
     Audio,
+    BmxNavItem,
+    BmxNavResponse,
+    BmxNavSection,
     BmxPlaybackResponse,
     BmxPodcastInfoResponse,
     Stream,
@@ -16,6 +19,7 @@ from soundcork.utils import strip_element_text
 # TODO: move into constants file eventually.
 TUNEIN_DESCRIBE = "https://opml.radiotime.com/describe.ashx?id=%s"
 TUNEIN_STREAM = "http://opml.radiotime.com/Tune.ashx?id=%s&formats=mp3,aac,ogg"
+TUNEIN_NAVIGATE = "https://api.radiotime.com/categories/local"
 
 
 # TODO:  determine how listen_id is used, if at all
@@ -204,6 +208,58 @@ def tunein_playback_podcast(podcast_id: str) -> BmxPlaybackResponse:
         streamType="onDemand",
     )
     return resp
+
+
+def tunein_navigate() -> BmxNavResponse:
+    contents = urllib.request.urlopen(TUNEIN_NAVIGATE).read()
+    content_str = contents.decode("utf-8")
+    content_json = json.loads(content_str)
+    sections = []
+    for section in content_json["Items"]:
+        items = []
+        for item in section["Children"]:
+            items.append(
+                BmxNavItem(
+                    links={
+                        "bmx_playback": {
+                            "href": f'/v1/playback/station/{item.get("GuideId", "")}',
+                            "type": "stationurl",
+                        },
+                        "bmx_preset": {
+                            "container_art": item.get("Image", ""),
+                            "href": f'{item.get("GuideId", "")}',
+                            "name": item.get("Title", ""),
+                            "type": "stationurl",
+                        },
+                    },
+                    image_url=item.get("Image", ""),
+                    name=item.get("Title", ""),
+                    subtitle=item.get("Subtitle", ""),
+                )
+            )
+        section_self_link = (
+            f"/v1/navigate/{base64.b64encode(TUNEIN_NAVIGATE.encode()).decode()}"
+        )
+        sections.append(
+            BmxNavSection(
+                links={"self": {"href": section_self_link}},
+                items=items,
+                layout="ribbon",
+                name=section.get("Title", ""),
+            )
+        )
+    return BmxNavResponse(
+        links={
+            "bmx_search": {
+                "filters": [],
+                "href": "/v1/search?q={query}",
+                "templated": True,
+            },
+            "self": {"href": "/v1/navigate"},
+        },
+        bmx_sections=sections,
+        layout="classic",
+    )
 
 
 def play_custom_stream(data: str) -> BmxPlaybackResponse:
