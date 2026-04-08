@@ -88,7 +88,7 @@ class BmxNavItem(BaseModel):
         serialization_alias="_links",
         validation_alias=AliasChoices("links", "_links"),
     )
-    image_url: str = Field(default="", serialization_alias="imageUrl")
+    image_url: str | None = Field(default=None, serialization_alias="imageUrl")
     name: str
     subtitle: str
 

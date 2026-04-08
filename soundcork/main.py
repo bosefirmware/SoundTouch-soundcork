@@ -587,8 +587,20 @@ def bmx_playback_podcast(episode_id: str, request: Request) -> BmxPlaybackRespon
     response_model_exclude_none=True,
     tags=["bmx"],
 )
-def bmx_tunein_navigate() -> BmxNavResponse:
-    return tunein_navigate()
+@app.get(
+    "/bmx/tunein/v1/navigate/{encoded_uri}",
+    response_model_exclude_none=True,
+    tags=["bmx"],
+)
+@app.get(
+    "/bmx/tunein/v1/navigate/sub/{subsection}/{encoded_uri}",
+    response_model_exclude_none=True,
+    tags=["bmx"],
+)
+def bmx_tunein_navigate(
+    encoded_uri: str = "", subsection: int | None = None
+) -> BmxNavResponse:
+    return tunein_navigate(encoded_uri, subsection)
 
 
 @app.get("/core02/svc-bmx-adapter-orion/prod/orion/station", tags=["bmx"])
