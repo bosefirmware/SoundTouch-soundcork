@@ -249,6 +249,7 @@ def tunein_sections_ashx(
     sections = []
     items = []
     body = content_json["body"]
+
     for idx, item in enumerate(body):
         type = item.get("type", "")
         if type:
@@ -270,10 +271,10 @@ def tunein_sections_ashx(
                 )
         else:
             logger.info(f"subsection {subsection} idx {idx}")
-            if subsection and not subsection == idx:
+            if subsection is not None and not subsection == idx:
                 continue
 
-            if len(body) == 1 or subsection:
+            if len(body) == 1 or subsection is not None:
                 layout = "classic"
                 max_count = 500
             else:
@@ -294,17 +295,16 @@ def tunein_sections_ashx(
                 BmxNavSection(
                     links={"self": {"href": section_self_link}},
                     items=section_items,
-                    layout="ribbon",
+                    layout=layout,
                     name=section_title,
                 )
             )
-    # if add_subsection:
-    #    subsection = f"sub/{idx}/"
-    # else:
-    #    subsection = ""
-    section_self_link = (
-        f"/v1/navigate/{base64.urlsafe_b64encode(tunein_uri.encode()).decode()}"
-    )
+    if subsection is not None:
+        subsection_part = f"sub/{subsection}/"
+    else:
+        subsection_part = ""  # if add_subsection:
+
+    section_self_link = f"/v1/navigate/{subsection_part}{base64.urlsafe_b64encode(tunein_uri.encode()).decode()}"
     sections.append(
         BmxNavSection(
             links={"self": {"href": section_self_link}},
