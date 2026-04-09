@@ -347,11 +347,12 @@ def tunein_navigate_playitem(item: dict) -> BmxNavItem:
 
 def tunein_navigate_link(item: dict) -> BmxNavItem:
     url = f'{item.get("URL", "")}&render=json'
+    logger.info(f"creating link for url {url}")
     enc_url = base64.urlsafe_b64encode(url.encode()).decode()
     return BmxNavItem(
         links={
             "bmx_navigate": {
-                "href": f"/v1/playback/station/{enc_url}",
+                "href": f"/v1/navigate/{enc_url}",
             }
         },
         image_url=item.get("image", ""),
