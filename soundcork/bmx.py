@@ -216,19 +216,33 @@ def tunein_playback_podcast(podcast_id: str) -> BmxPlaybackResponse:
 def tunein_navigate(
     encoded_uri: str = "", subsection: int | None = None
 ) -> BmxNavResponse:
+    """
+    tunein navigation has a base level /v1/navigate plus an optional /sub/{n}
+    to indicate a particular subsection, plus an optional base64-encoded url
+    to show the source of the
+    """
     bmx_search_link = None
     if encoded_uri:
         tunein_uri = base64.urlsafe_b64decode(encoded_uri).decode()
     else:
         tunein_uri = TUNEIN_NAVIGATE_ASHX
+        # search only shows at the top level
         bmx_search_link = {
             "filters": [],
             "href": "/v1/search?q={query}",
             "templated": True,
         }
     sections = tunein_sections_ashx(tunein_uri, not subsection, subsection)
+    if subsection is not None:
+        subsection_part = f"/sub/{subsection}"
+    else:
+        subsection_part = ""
+    if encoded_uri:
+        uri_part = f"/{encoded_uri}"
+    else:
+        uri_part = ""
     links = {
-        "self": {"href": f"/v1/navigate{'/' if encoded_uri else ''}{encoded_uri}"},
+        "self": {"href": f"/v1/navigate{subsection_part}{uri_part}"},
         "bmx_search": bmx_search_link,
         "filters": None,
     }
@@ -254,23 +268,11 @@ def tunein_sections_ashx(
         type = item.get("type", "")
         if type:
             if type == "link":
-                url = f'{item.get("URL", "")}&render=json'
-                enc_url = base64.urlsafe_b64encode(url.encode()).decode()
-                logger.info(f"encoding item {item}")
-                items.append(
-                    BmxNavItem(
-                        links={
-                            "bmx_navigate": {
-                                "href": f"/v1/navigate/{enc_url}",
-                            }
-                        },
-                        image_url=None,
-                        name=item.get("text", ""),
-                        subtitle=item.get("subtext", ""),
-                    )
-                )
+                items.append(tunein_navigate_link(item))
+            else:
+                logger.info(f"top-level item has type {type}: {item}")
         else:
-            logger.info(f"subsection {subsection} idx {idx}")
+            logger.debug(f"subsection {subsection} idx {idx}")
             if subsection is not None and not subsection == idx:
                 continue
 
