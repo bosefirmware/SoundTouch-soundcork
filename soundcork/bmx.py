@@ -275,7 +275,7 @@ def tunein_sections_ashx(
                 continue
 
             if len(body) == 1 or subsection is not None:
-                layout = "classic"
+                layout = ""
                 max_count = 500
             else:
                 layout = "ribbon"
@@ -285,7 +285,14 @@ def tunein_sections_ashx(
             section_items = []
             count = 0
             for nav_item in item["children"]:
-                section_items.append(tunein_navigate_playitem(nav_item))
+                type = nav_item.get("type", "")
+                if type == "audio":
+                    section_items.append(tunein_navigate_playitem(nav_item))
+                elif type == "audio":
+                    section_items.append(tunein_navigate_link(nav_item))
+                else:
+                    logger.info(f"unknown type {type} for {nav_item}")
+
                 count += 1
                 if count > max_count:
                     break
@@ -329,6 +336,21 @@ def tunein_navigate_playitem(item: dict) -> BmxNavItem:
                 "name": item.get("text", ""),
                 "type": "stationurl",
             },
+        },
+        image_url=item.get("image", ""),
+        name=item.get("text", ""),
+        subtitle=item.get("subtext", ""),
+    )
+
+
+def tunein_navigate_link(item: dict) -> BmxNavItem:
+    url = f'{item.get("URL", "")}&render=json'
+    enc_url = base64.urlsafe_b64encode(url.encode()).decode()
+    return BmxNavItem(
+        links={
+            "bmx_navigate": {
+                "href": f"/v1/playback/station/{enc_url}",
+            }
         },
         image_url=item.get("image", ""),
         name=item.get("text", ""),
