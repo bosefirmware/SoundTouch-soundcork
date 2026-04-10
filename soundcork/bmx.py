@@ -213,7 +213,7 @@ def tunein_playback_podcast(podcast_id: str) -> BmxPlaybackResponse:
     return resp
 
 
-def tunein_navigate(
+def tunein_navigate_v1(
     encoded_uri: str = "", subsection: int | None = None
 ) -> BmxNavResponse:
     """
@@ -238,6 +238,13 @@ def tunein_navigate(
     The actual bose implementation seems to have some customized behavior where they
     display lists that don't match any tunein endpoints that I was able to find. In
     theory we could build such a custom menu, too, but that's a bit much for a first pass.
+
+    Also for context: the bose bmx navigate endpoint is clearly designed specifically
+    for the stockholm application, which uses the responses from the server to
+    determine what information to show on which pages as well as what layout to use.
+    This first implementation for soundcork follows that pattern as closely as possible.
+    Future interactions for other clients could be implemented in different ways, perhaps
+    as v2.
     """
     bmx_search_link = None
     if encoded_uri:
